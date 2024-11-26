@@ -1,3 +1,8 @@
+## update nov.26 2024
+
+I forked it and added fp8.
+(One problem) For some reason, first generation is smooth, and second one freezes comfyUI as GPU gets to max usage. Something must not be set right.
+
 # ComfyUI-PuLID-Flux-Enhanced
 adapted from https://github.com/balazik/ComfyUI-PuLID-Flux
 
