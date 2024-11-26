@@ -26,12 +26,33 @@ try:
 except:
     FusedLayerNorm = LayerNorm
     print("Nvidia APEX normalization not installed, using PyTorch LayerNorm")
-
 try:
     import xformers.ops as xops
 except ImportError:
     xops = None
     #print("Please 'pip install xformers'")
+    
+    
+######-------------------------------------
+import json
+try:
+    from optimum.quanto import requantize
+except ImportError:
+    requantize = None
+    print("Please install 'optimum-quanto' for FP8 quantization support.")
+
+######-------------------------------------
+def requantize_model(model: nn.Module, state_dict: dict, quantization_map_path: str, device: str = 'cpu'):
+    if requantize is None:
+        raise ImportError("optimum-quanto is not installed. Cannot quantize model to FP8.")
+    print("Loading quantization map...")
+    with open(quantization_map_path) as f:
+        quantization_map = json.load(f)
+    print("Starting quantization process...")
+    requantize(model, state_dict, quantization_map, device=device)
+    print("Model has been quantized to FP8.")
+######-------------------------------------
+
 
 @dataclass
 class CLIPVisionCfg:
@@ -367,6 +388,11 @@ def build_model_from_openai_state_dict(
         state_dict: dict,
         quick_gelu=True,
         cast_dtype=torch.float16,
+        ##########################----------------------------------
+        fp8=False,
+        quantization_map_path: str = None,
+        device: str = 'cpu',
+        ##########################----------------------------------
 ):
     vit = "visual.proj" in state_dict
 
@@ -414,6 +440,15 @@ def build_model_from_openai_state_dict(
         quick_gelu=quick_gelu,  # OpenAI models were trained with QuickGELU
         cast_dtype=cast_dtype,
     )
+    ##########################----------------------------------
+    if fp8:
+        if quantization_map_path is None:
+            raise ValueError("quantization_map_path must be provided when fp8 is True")
+        requantize_model(model, state_dict, quantization_map_path, device=device)
+    else:
+        model.load_state_dict(state_dict)
+    ##########################----------------------------------
+        
 
     for key in ["input_resolution", "context_length", "vocab_size"]:
         state_dict.pop(key, None)
