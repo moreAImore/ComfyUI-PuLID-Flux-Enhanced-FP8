@@ -229,6 +229,15 @@ def create_model(
     if isinstance(device, str):
         device = torch.device(device)
 
+    # if pretrained and pretrained.lower() == 'openai':
+        # logging.info(f'Loading pretrained {model_name} from OpenAI.')
+        # model = load_openai_model(
+            # model_name,
+            # precision=precision,
+            # device=device,
+            # jit=jit,
+            # cache_dir=cache_dir,
+        # )######-------------------------------------
     if pretrained and pretrained.lower() == 'openai':
         logging.info(f'Loading pretrained {model_name} from OpenAI.')
         model = load_openai_model(
@@ -237,7 +246,9 @@ def create_model(
             device=device,
             jit=jit,
             cache_dir=cache_dir,
-        )
+            fp8=fp8,
+            quantization_map_path=quantization_map_path,
+        )    ######-------------------------------------
     else:
         model_cfg = get_model_config(model_name)
         if model_cfg is not None:
@@ -355,7 +366,26 @@ def create_model(
     return model
 
 
-def create_model_and_transforms(
+# def create_model_and_transforms(
+        # model_name: str,
+        # pretrained: Optional[str] = None,
+        # precision: str = 'fp32',
+        # device: Union[str, torch.device] = 'cpu',
+        # jit: bool = False,
+        # force_quick_gelu: bool = False,
+        # force_custom_clip: bool = False,
+        # force_patch_dropout: Optional[float] = None,
+        # pretrained_image: str = '',
+        # pretrained_text: str = '',
+        # pretrained_hf: bool = True,
+        # pretrained_visual_model: str = None,
+        # pretrained_text_model: str = None,
+        # image_mean: Optional[Tuple[float, ...]] = None,
+        # image_std: Optional[Tuple[float, ...]] = None,
+        # cache_dir: Optional[str] = None,
+        # skip_list: list = [],
+# ):
+def create_model( ######-------------------------------------
         model_name: str,
         pretrained: Optional[str] = None,
         precision: str = 'fp32',
@@ -369,11 +399,11 @@ def create_model_and_transforms(
         pretrained_hf: bool = True,
         pretrained_visual_model: str = None,
         pretrained_text_model: str = None,
-        image_mean: Optional[Tuple[float, ...]] = None,
-        image_std: Optional[Tuple[float, ...]] = None,
         cache_dir: Optional[str] = None,
-        skip_list: list = [],
-):
+        skip_list: list  = [],
+        fp8: bool = False,
+        quantization_map_path: Optional[str] = None,
+): ######-------------------------------------
     model = create_model(
         model_name,
         pretrained,
